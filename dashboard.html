@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KNUSTrack — Net-Zero Emissions Dashboard · KNUST CoE</title>
+<link rel="icon" type="image/svg+xml" href="assets/logomark.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root,[data-theme="light"]{
+--bg:#faf7ec;--bg2:#f3eeda;--surf:#fffdf6;--surf2:#f6f0dd;--surf3:#efe6c9;--glass:rgba(255,253,246,.66);
+--line:rgba(120,100,40,.16);--line2:rgba(120,100,40,.28);
+--tx:#241f10;--txm:#6c6238;--txf:#9a8f60;--txi:#fffdf6;
+--p:#8c6b00;--ph:#6f5600;--pa:#4e3d00;--pdim:rgba(140,107,0,.10);
+--s1:#c84981;--s2:#4d85be;--s3:#39843c;--acc:#8b5cf6;
+--ok:#39843c;--warn:#b26a10;--err:#be233a;
+--shadow:0 14px 44px rgba(40,30,0,.14);--shadow-s:0 3px 14px rgba(40,30,0,.10);
+--r:18px;--r2:13px;--r3:11px;
+--ff-d:'Merriweather',Georgia,serif;--ff-b:'Inter',system-ui,-apple-system,sans-serif;
+--tr:170ms cubic-bezier(.16,1,.3,1);
+}
+[data-theme="dark"]{
+--bg:#0d1308;--bg2:#0f1a09;--surf:#151f0d;--surf2:#1c2913;--surf3:#26361a;--glass:rgba(28,41,19,.55);
+--line:rgba(150,180,110,.14);--line2:rgba(150,180,110,.26);
+--tx:#f4f0da;--txm:#c9be8d;--txf:#8f9663;--txi:#0d1308;
+--p:#f2b91e;--ph:#ffd45e;--pa:#ffe39a;--pdim:rgba(242,185,30,.13);
+--s1:#e0619a;--s2:#6ba3db;--s3:#68b45c;--acc:#a78bfa;
+--ok:#68b45c;--warn:#f2b91e;--err:#e0617a;
+--shadow:0 16px 48px rgba(0,0,0,.55);--shadow-s:0 4px 18px rgba(0,0,0,.42);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:15px}
+body{font-family:var(--ff-b);background:var(--bg);color:var(--tx);min-height:100vh;line-height:1.55;overflow-x:hidden;
+ background-image:radial-gradient(1100px 620px at 88% -8%,var(--pdim),transparent 60%),radial-gradient(900px 560px at -6% 4%,color-mix(in oklab,var(--s3) 12%,transparent),transparent 58%);
+ -webkit-font-smoothing:antialiased;transition:background var(--tr),color var(--tr)}
+h1,h2,h3,.disp{font-family:var(--ff-d);letter-spacing:-.01em}
+.app{display:flex;height:100vh;overflow:hidden}
+/* ── SIDEBAR ── */
+.sb{width:264px;flex-shrink:0;background:linear-gradient(180deg,var(--surf),var(--bg2));border-right:1px solid var(--line);
+ display:flex;flex-direction:column;overflow-y:auto;z-index:100;transition:width var(--tr)}
+.sb-logo{padding:1.15rem 1.2rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.75rem}
+.sb-logo svg{flex-shrink:0}
+.sb-logo-text h1{font-family:var(--ff-d);font-size:1rem;font-weight:900;color:var(--tx);letter-spacing:-.01em;line-height:1.1}
+.sb-logo-text h1 b{color:var(--p)}
+.sb-logo-text p{font-size:.62rem;color:var(--txf);margin-top:2px;letter-spacing:.02em}
+.sb-sec{padding:.7rem .6rem .1rem}
+.sb-sec-lbl{font-size:.58rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--txf);padding:0 .6rem;margin-bottom:.35rem}
+.nav{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;border-radius:var(--r3);cursor:pointer;transition:all var(--tr);
+ font-size:.8rem;font-weight:600;color:var(--txm);border:1px solid transparent;background:none;width:100%;text-align:left;position:relative}
+.nav:hover{background:var(--surf2);color:var(--tx)}
+.nav.active{background:linear-gradient(100deg,var(--pdim),transparent);color:var(--p);font-weight:700;border-color:color-mix(in oklab,var(--p) 34%,transparent)}
+.nav.active::before{content:'';position:absolute;left:0;top:18%;bottom:18%;width:3px;border-radius:3px;background:var(--p)}
+.nav svg{width:15px;height:15px;flex-shrink:0;opacity:.75}
+.nav.active svg{opacity:1}
+.sb-footer{margin-top:auto;padding:1rem 1.1rem;border-top:1px solid var(--line)}
+.sb-badge{display:flex;align-items:center;gap:.5rem;background:var(--pdim);border:1px solid color-mix(in oklab,var(--p) 26%,transparent);border-radius:var(--r3);padding:.5rem .7rem;font-size:.64rem;font-weight:700;color:var(--p)}
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:60px;flex-shrink:0;background:color-mix(in oklab,var(--surf) 92%,transparent);backdrop-filter:blur(10px);
+ border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 1.4rem;gap:1rem;z-index:50}
+.topbar::before{content:'';width:26px;height:26px;background:url('https://coe.knust.edu.gh/sites/coe.knust.edu.gh/files/2017-12/coelogo.png') center/contain no-repeat;opacity:.9;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25));border-radius:999px;flex-shrink:0}
+.tb-title{font-family:var(--ff-d);font-size:.98rem;font-weight:700;flex:1;line-height:1.15}
+.tb-sub{font-size:.64rem;color:var(--txm);font-weight:500}
+.tb-actions{display:flex;align-items:center;gap:.5rem}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:.42rem .85rem;border-radius:var(--r3);font-size:.74rem;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all var(--tr);font-family:var(--ff-b)}
+.btn svg{width:14px;height:14px}
+.btn-p{background:linear-gradient(135deg,var(--p),var(--ph));color:#2a2100}.btn-p:hover{filter:brightness(1.06)}
+.btn-g{background:var(--surf2);color:var(--txm);border-color:var(--line2)}.btn-g:hover{background:var(--surf3);color:var(--tx);border-color:var(--p)}
+.btn-ico{padding:.42rem;border-radius:var(--r3);background:var(--surf2);border:1px solid var(--line2);cursor:pointer;color:var(--txm);display:inline-flex;align-items:center;justify-content:center;transition:all var(--tr)}
+.btn-ico:hover{background:var(--surf3);color:var(--p)}
+/* ── YEAR SELECTOR ── */
+.ys{display:flex;gap:.2rem;background:var(--surf2);padding:.22rem;border-radius:var(--r3);border:1px solid var(--line)}
+.yb{padding:.3rem .7rem;border-radius:calc(var(--r3) - 3px);font-size:.72rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all var(--tr)}
+.yb.active{background:var(--surf);color:var(--p);box-shadow:var(--shadow-s)}
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:1.5rem 1.6rem 2.4rem}
+.page{display:none;animation:fi .34s cubic-bezier(.2,.7,.2,1)}.page.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+/* ── GRID ── */
+.g{display:grid;gap:1.1rem}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}.g12{grid-template-columns:1fr 2fr}
+.g21{grid-template-columns:2fr 1fr}.g13{grid-template-columns:1fr 3fr}
+.span2{grid-column:span 2}
+/* ── PAGE HEADER ── */
+.ph{margin-bottom:1.2rem;padding-left:.9rem;position:relative}
+.ph::before{content:'';position:absolute;left:0;top:.15rem;bottom:.15rem;width:4px;border-radius:4px;background:linear-gradient(180deg,var(--p),var(--s3))}
+.ph h2{font-family:var(--ff-d);font-size:1.4rem;font-weight:900;letter-spacing:-.02em;line-height:1.12}
+.ph p,.lead{font-size:.8rem;color:var(--txm);margin-top:.35rem;max-width:92ch;line-height:1.6}
+/* ── HERO (overview) ── */
+.hero{position:relative;display:grid;grid-template-columns:1.5fr .95fr;gap:1.6rem;align-items:center;
+ border:1px solid color-mix(in oklab,var(--p) 30%,var(--line));border-radius:22px;padding:1.7rem 1.9rem;margin-bottom:1.3rem;overflow:hidden;
+ background:linear-gradient(120deg, color-mix(in oklab,var(--p) 15%, var(--surf)) 0%, var(--surf) 52%, color-mix(in oklab,var(--s3) 15%, var(--surf)) 100%)}
+.hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--p) 0 50%,var(--s3) 50% 100%)}
+@media(max-width:900px){.hero{grid-template-columns:1fr}}
+.hero-ey{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--txm);font-weight:800;display:flex;align-items:center;gap:.55rem}
+.flagdot{display:inline-flex;gap:3px;vertical-align:middle}
+.flagdot i{width:8px;height:8px;border-radius:50%}
+.flagdot .r{background:#ce1126}.flagdot .yy{background:#fcd116}.flagdot .gg{background:#0e7c4a}
+.hero h2{font-family:var(--ff-d);font-size:1.65rem;font-weight:900;letter-spacing:-.02em;line-height:1.1;margin:.55rem 0 0}
+.hero .hsub{font-size:.82rem;color:var(--txm);margin-top:.4rem;line-height:1.55;max-width:60ch}
+.hero .hsub b{color:var(--tx)}
+.hero-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;font-weight:600;color:var(--txm);
+ background:color-mix(in oklab,var(--surf) 70%,transparent);border:1px solid var(--line2);padding:.32rem .7rem;border-radius:30px}
+.chip b{color:var(--p);font-weight:800;font-family:var(--ff-d)}
+.hero-s{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.hs{background:color-mix(in oklab,var(--surf) 62%,transparent);border:1px solid var(--line);border-radius:14px;padding:.8rem .7rem;text-align:center}
+.hs-v{font-family:var(--ff-d);font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;color:var(--p);line-height:1}
+.hs-l{font-size:.6rem;color:var(--txm);margin-top:.28rem;font-weight:600;line-height:1.25}
+.hero-ico{width:52px;height:52px;background:linear-gradient(135deg,var(--p),var(--ph));border-radius:15px;display:flex;align-items:center;justify-content:center;color:#2a2100;flex-shrink:0}
+/* ── CARD ── */
+.card{background:linear-gradient(180deg,var(--glass),color-mix(in oklab,var(--surf) 70%,transparent));border-radius:var(--r);
+ border:1px solid var(--line);box-shadow:var(--shadow-s);overflow:hidden;transition:box-shadow var(--tr),border-color var(--tr);backdrop-filter:blur(6px)}
+.card:hover{box-shadow:var(--shadow);border-color:var(--line2)}
+.ch{padding:1.05rem 1.2rem .7rem;display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem}
+.ct{font-family:var(--ff-d);font-size:.92rem;font-weight:700;color:var(--tx);letter-spacing:-.01em}
+.cs{font-size:.66rem;color:var(--txm);margin-top:.18rem;font-weight:500}
+.cb{padding:0 1.2rem 1.2rem}
+/* ── KPI ── */
+.kpi{background:linear-gradient(165deg,var(--surf2),color-mix(in oklab,var(--surf) 72%,transparent));border-radius:var(--r);border:1px solid var(--line);
+ padding:1.15rem 1.2rem;position:relative;overflow:hidden;box-shadow:var(--shadow-s);transition:border-color var(--tr)}
+.kpi:hover{border-color:var(--line2)}
+.kpi::before{content:'';position:absolute;inset:0;border-radius:var(--r);background:linear-gradient(135deg,var(--p) 0%,transparent 52%);opacity:.05;pointer-events:none}
+.kpi-lbl{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txm);margin-bottom:.4rem}
+.kpi-val{font-family:var(--ff-d);font-size:1.72rem;font-weight:900;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.02em;line-height:1}
+.kpi-unit{font-size:.68rem;font-weight:600;color:var(--txm);margin-left:.22rem;font-family:var(--ff-b)}
+.kpi-delta{display:inline-flex;align-items:center;gap:.2rem;font-size:.64rem;font-weight:700;margin-top:.42rem;padding:.14rem .5rem;border-radius:9999px;background:var(--surf3);color:var(--txm)}
+.d-up{color:var(--err)}.d-dn{color:var(--ok)}.d-neu{color:var(--txm)}
+/* ── SCOPE BAR ── */
+.sbr{display:flex;align-items:center;gap:.7rem;margin-bottom:.7rem}
+.sbr-lbl{font-size:.7rem;font-weight:700;width:82px;color:var(--txm);flex-shrink:0}
+.sbr-track{flex:1;height:8px;background:var(--surf3);border-radius:5px;overflow:hidden}
+.sbr-fill{height:100%;border-radius:5px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.sbr-val{font-size:.7rem;font-weight:800;font-variant-numeric:tabular-nums;width:96px;text-align:right;flex-shrink:0;font-family:var(--ff-d)}
+/* ── LEGEND ── */
+.leg{display:flex;flex-wrap:wrap;gap:.45rem 1rem;padding:.7rem 0 0}
+.leg-i{display:flex;align-items:center;gap:.35rem;font-size:.68rem;color:var(--txm)}
+.leg-d{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse;font-size:.72rem}
+.dt th{padding:.5rem .7rem;font-size:.6rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--txm);text-align:left;border-bottom:1px solid var(--line2);background:var(--surf2);white-space:nowrap}
+.dt td{padding:.5rem .7rem;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--surf2)}
+.dt .tr{font-weight:800;color:var(--p);background:var(--pdim)!important;border-top:1px solid var(--line2)}
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:.14rem .5rem;border-radius:9999px;font-size:.6rem;font-weight:700}
+.bg-g{background:color-mix(in oklab,var(--ok) 16%,transparent);color:var(--ok)}
+.bg-b{background:color-mix(in oklab,var(--s2) 16%,transparent);color:var(--s2)}
+.bg-o{background:color-mix(in oklab,var(--s1) 16%,transparent);color:var(--s1)}
+.bg-p{background:color-mix(in oklab,var(--s3) 16%,transparent);color:var(--s3)}
+/* ── INSIGHT ── */
+.ins{border-radius:var(--r3);padding:.75rem 1rem;border-left:3px solid;margin-bottom:.55rem;background:var(--surf2)}
+.ins.pos{border-color:var(--ok)}.ins.warn{border-color:var(--warn)}.ins.info{border-color:var(--s2)}
+.ins-t{font-size:.74rem;font-weight:700;margin-bottom:.25rem}
+.ins-b{font-size:.68rem;color:var(--txm);line-height:1.5}
+/* ── TABS ── */
+.tabs{display:flex;gap:.3rem;border-bottom:1px solid var(--line2);margin-bottom:1rem}
+.tab{padding:.45rem .9rem;font-size:.74rem;font-weight:700;cursor:pointer;border:none;background:none;color:var(--txm);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all var(--tr)}
+.tab:hover{color:var(--tx)}.tab.active{color:var(--p);border-bottom-color:var(--p)}
+.tp{display:none}.tp.active{display:block}
+/* ── METHOD TOGGLE ── */
+.mt{display:flex;gap:.2rem;background:var(--surf3);padding:.2rem;border-radius:var(--r3)}
+.mb{padding:.26rem .6rem;border-radius:calc(var(--r3) - 3px);font-size:.66rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--txm);transition:all var(--tr)}
+.mb.active{background:var(--surf);color:var(--p);box-shadow:var(--shadow-s)}
+/* ── DIVIDER ── */
+.div{height:1px;background:var(--line);margin:.75rem 0}
+/* ── SCROLL ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surf3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--line2)}
+@media(max-width:820px){
+ .sb{position:fixed;left:-280px;height:100%;transition:left var(--tr);z-index:200}
+ .sb.open{left:0}
+ .g4,.g3{grid-template-columns:repeat(2,1fr)}
+ .g2,.g12,.g21,.g13,.hero,.hero-s{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sb" id="sb">
+<a class="sb-logo" href="index.html" title="Back to KNUSTrack home" style="text-decoration:none;color:inherit;cursor:pointer">
+<svg width="42" height="42" viewBox="0 0 48 48" style="flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))" aria-label="KNUSTrack"><defs><linearGradient id="sbt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7c948"/><stop offset=".55" stop-color="#f2b91e"/><stop offset="1" stop-color="#3f8a3f"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#sbt)"/><path d="M10 15 L18 23 L26 18.5 L33 26" fill="none" stroke="#12200a" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="15" r="2.5" fill="#12200a"/><path d="M33 26 c 5.4 -2.2 10.4 -0.6 12.2 4.4 c -5.4 2.2 -10.4 0.6 -12.2 -4.4 Z" fill="#12200a"/></svg>
+<div class="sb-logo-text"><h1>KNUSTrack</h1><p>Net-Zero Emissions Dashboard</p></div>
+</a>
+
+<div class="sb-sec">
+<div class="sb-sec-lbl">Overview</div>
+<button class="nav active" onclick="goPage('overview',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+Executive Summary
+</button>
+<button class="nav" onclick="goPage('footprint',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+Full Footprint 2025
+</button>
+</div>
+
+<div class="sb-sec">
+<div class="sb-sec-lbl">Emissions by Scope</div>
+<button class="nav" onclick="goPage('s1',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 4"/></svg>
+<span style="color:var(--s1)">Scope 1</span>&nbsp;Direct
+</button>
+<button class="nav" onclick="goPage('s2',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+<span style="color:var(--s2)">Scope 2</span>&nbsp;Electricity
+</button>
+<button class="nav" onclick="goPage('s3',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+<span style="color:var(--s3)">Scope 3</span>&nbsp;Indirect
+</button>
+</div>
+
+<div class="sb-sec">
+<div class="sb-sec-lbl">Analysis</div>
+<button class="nav" onclick="goPage('trends',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+Trend Analysis
+</button>
+<button class="nav" onclick="goPage('depts',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+Departments
+</button>
+<button class="nav" onclick="goPage('commute',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+Commuting
+</button>
+<button class="nav" onclick="goPage('bldgs',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+Buildings & Labs
+</button>
+</div>
+
+<div class="sb-sec">
+<div class="sb-sec-lbl">Strategy</div>
+<button class="nav" onclick="goPage('pathway',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+Transition Pathway
+</button>
+</div>
+
+<div class="sb-footer">
+<div class="sb-badge">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+College of Engineering · 2023–2025
+</div>
+</div>
+</aside>
+
+<!-- ─── MAIN ─── -->
+<main class="main">
+<header class="topbar">
+<button class="btn-ico" onclick="document.getElementById('sb').classList.toggle('open')" aria-label="Menu">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div style="flex:1">
+<div class="tb-title" id="ptitle">Executive Summary</div>
+<div class="tb-sub">KNUST · College of Engineering — Net-Zero Programme · Phase 1</div>
+</div>
+<div class="tb-actions">
+<a class="btn btn-g" href="index.html" title="KNUSTrack home"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Home</a>
+<div class="ys">
+<button class="yb" onclick="setYr('2023',this)">2023</button>
+<button class="yb" onclick="setYr('2024',this)">2024</button>
+<button class="yb active" onclick="setYr('2025',this)">2025</button>
+</div>
+<button class="btn-ico" onclick="toggleDark()" title="Toggle theme">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+</div>
+</header>
+
+<div class="content">
+
+<!-- ===== OVERVIEW ===== -->
+<section class="page active" id="pg-overview">
+<div class="hero">
+<div>
+<div class="hero-ey"><span class="flagdot"><i class="r"></i><i class="yy"></i><i class="gg"></i></span>KNUST · College of Engineering · NCEL</div>
+<h2>The College of Engineering carbon footprint</h2>
+<p class="hsub">The College's first complete, auditable greenhouse-gas baseline — <b>Scopes 1, 2 &amp; 3 across 2023–2025</b>. Phase 1 of a net-zero programme that will later extend to the wider University.</p>
+<div class="hero-chips"><span class="chip"><b>Phase 1</b> · College of Engineering</span><span class="chip"><b>1,927</b> tCO₂e · 2025</span><span class="chip"><b>2040</b> net-zero target</span></div>
+</div>
+<div class="hero-s">
+<div class="hs"><div class="hs-v">1,927</div><div class="hs-l">tCO₂e total · 2025</div></div>
+<div class="hs"><div class="hs-v">46.5%</div><div class="hs-l">Scope 3 share</div></div>
+<div class="hs"><div class="hs-v">2040</div><div class="hs-l">Net-zero target</div></div>
+</div>
+</div>
+
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Total Footprint 2025</div><div class="kpi-val">1,927<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">All scopes combined</div></div>
+<div class="kpi"><div class="kpi-lbl">Scope 1 Direct</div><div class="kpi-val" style="color:var(--s1)">495.4<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">25.7% of total</div></div>
+<div class="kpi"><div class="kpi-lbl">Scope 2 Electricity</div><div class="kpi-val" style="color:var(--s2)">535.9<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">27.8% of total</div></div>
+<div class="kpi"><div class="kpi-lbl">Scope 3 Indirect</div><div class="kpi-val" style="color:var(--s3)">896.1<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">46.5% of total</div></div>
+</div>
+
+<div class="g g12" style="margin-bottom:.9rem">
+<div class="card">
+<div class="ch"><div><div class="ct">Full Scope Breakdown — 2025</div><div class="cs">tCO₂e by scope</div></div></div>
+<div class="cb"><div style="height:195px"><canvas id="cScopeDonut"></canvas></div>
+<div class="leg">
+<div class="leg-i"><span class="leg-d" style="background:var(--s1)"></span>Scope 1 · 495 tCO₂e</div>
+<div class="leg-i"><span class="leg-d" style="background:var(--s2)"></span>Scope 2 · 536 tCO₂e</div>
+<div class="leg-i"><span class="leg-d" style="background:var(--s3)"></span>Scope 3 · 896 tCO₂e</div>
+</div></div></div>
+
+<div class="card">
+<div class="ch"><div><div class="ct">Scope 3 Contributions</div><div class="cs">4 categories · 896 tCO₂e</div></div></div>
+<div class="cb">
+<div style="height:130px"><canvas id="cSc3Contrib"></canvas></div>
+<div style="margin-top:.8rem">
+<div class="sbr"><div class="sbr-lbl">Employee</div><div class="sbr-track"><div class="sbr-fill" style="width:57.5%;background:var(--s3)"></div></div><div class="sbr-val" style="color:var(--s3)">515.1 tCO₂e</div></div>
+<div class="sbr"><div class="sbr-lbl">Student</div><div class="sbr-track"><div class="sbr-fill" style="width:31.4%;background:#8b5cf6"></div></div><div class="sbr-val" style="color:#8b5cf6">281.8 tCO₂e</div></div>
+<div class="sbr"><div class="sbr-lbl">Supply Chain</div><div class="sbr-track"><div class="sbr-fill" style="width:10.2%;background:var(--warn)"></div></div><div class="sbr-val" style="color:var(--warn)">91.3 tCO₂e</div></div>
+<div class="sbr"><div class="sbr-lbl">Waste</div><div class="sbr-track"><div class="sbr-fill" style="width:1%;background:var(--txm)"></div></div><div class="sbr-val" style="color:var(--txm)">7.9 tCO₂e</div></div>
+</div></div></div>
+</div>
+
+<div class="g g21" style="margin-bottom:.9rem">
+<div class="card">
+<div class="ch"><div><div class="ct">3-Year Supply-Chain Emissions Trend</div><div class="cs">EEIO · DEFRA · Hybrid · tCO₂e</div></div></div>
+<div class="cb"><div style="height:210px"><canvas id="cTrend"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Key Insights</div></div>
+<div class="cb">
+<div class="ins warn"><div class="ins-t">📈 Supply-Chain +22% (2023→2025)</div><div class="ins-b">Emissions grew from 74.9 to 91.3 tCO₂e. Electronics IT is the largest driver at 23 tCO₂e.</div></div>
+<div class="ins info"><div class="ins-t">🏗️ Scope 1 — Fugitive Dominant</div><div class="ins-b">Fugitive emissions (288 tCO₂e) from AC refrigerants & labs represent 58% of Scope 1.</div></div>
+<div class="ins pos"><div class="ins-t">🎓 Student Commuting Opportunity</div><div class="ins-b">58% of students walk — already low-carbon. Shifting trotro/car users to e-shuttles could save ~100 tCO₂e/yr.</div></div>
+</div></div>
+</div>
+</section>
+
+<!-- ===== FOOTPRINT ===== -->
+<section class="page" id="pg-footprint">
+<div class="ph"><h2>Full Carbon Footprint 2025</h2><p>All scopes · 1,927.40 tCO₂e total · KNUST College of Engineering</p></div>
+<div class="g g3" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Scope 1 — Direct</div><div class="kpi-val" style="color:var(--s1)">495.43<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">Fugitive + Vehicles + Diesel</div></div>
+<div class="kpi"><div class="kpi-lbl">Scope 2 — Electricity</div><div class="kpi-val" style="color:var(--s2)">535.89<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">Device-level audit</div></div>
+<div class="kpi"><div class="kpi-lbl">Scope 3 — Indirect</div><div class="kpi-val" style="color:var(--s3)">896.08<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">Commuting + Supply chain</div></div>
+</div>
+<div class="g g2">
+<div class="card">
+<div class="ch"><div><div class="ct">Scope 1 Breakdown</div><div class="cs">Direct emission sources</div></div></div>
+<div class="cb"><div style="height:190px"><canvas id="cS1Break"></canvas></div>
+<table class="dt" style="margin-top:.7rem">
+<thead><tr><th>Source</th><th>tCO₂e</th><th>%</th></tr></thead>
+<tbody>
+<tr><td>Fugitive Emissions</td><td>287.98</td><td><span class="badge bg-o">58.1%</span></td></tr>
+<tr><td>Fleet Vehicles</td><td>110.26</td><td><span class="badge bg-o">22.3%</span></td></tr>
+<tr><td>Diesel Power Gen.</td><td>97.20</td><td><span class="badge bg-o">19.6%</span></td></tr>
+<tr class="tr"><td>TOTAL Scope 1</td><td>495.43</td><td>100%</td></tr>
+</tbody></table></div></div>
+
+<div class="card">
+<div class="ch"><div><div class="ct">Footprint by Scope</div><div class="cs">Comparative bar chart · tCO₂e</div></div></div>
+<div class="cb"><div style="height:190px"><canvas id="cFpBar"></canvas></div>
+<div style="margin-top:.75rem">
+<div class="sbr"><div class="sbr-lbl" style="color:var(--s1)">Scope 1</div><div class="sbr-track"><div class="sbr-fill" style="width:25.7%;background:var(--s1)"></div></div><div class="sbr-val">495 tCO₂e</div></div>
+<div class="sbr"><div class="sbr-lbl" style="color:var(--s2)">Scope 2</div><div class="sbr-track"><div class="sbr-fill" style="width:27.8%;background:var(--s2)"></div></div><div class="sbr-val">536 tCO₂e</div></div>
+<div class="sbr"><div class="sbr-lbl" style="color:var(--s3)">Scope 3</div><div class="sbr-track"><div class="sbr-fill" style="width:46.5%;background:var(--s3)"></div></div><div class="sbr-val">896 tCO₂e</div></div>
+</div></div></div>
+</div>
+</section>
+
+<!-- ===== SCOPE 1 ===== -->
+<section class="page" id="pg-s1">
+<div class="ph"><h2 style="color:var(--s1)">Scope 1 — Direct Emissions</h2><p>Fugitive gases · Fleet vehicles · Diesel generators · 495.43 tCO₂e</p></div>
+<div class="g g3" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Fugitive Emissions</div><div class="kpi-val" style="color:var(--s1)">287.98<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">58.1% of Scope 1</div></div>
+<div class="kpi"><div class="kpi-lbl">Fleet Vehicles</div><div class="kpi-val" style="color:var(--s1)">110.26<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">22.3%</div></div>
+<div class="kpi"><div class="kpi-lbl">Diesel Power Gen.</div><div class="kpi-val" style="color:var(--s1)">97.20<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">19.6%</div></div>
+</div>
+<div class="g g2">
+<div class="card">
+<div class="ch"><div class="ct">Source Distribution</div></div>
+<div class="cb"><div style="height:250px"><canvas id="cS1Donut"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Reduction Opportunities</div></div>
+<div class="cb">
+<div class="ins warn"><div class="ins-t">⚡ Refrigerant Management</div><div class="ins-b">AC refrigerant leakage & lab fugitives = 58% of Scope 1. Low-GWP refrigerant retrofits + preventive maintenance target ~150 tCO₂e/yr reduction.</div></div>
+<div class="ins info"><div class="ins-t">🚗 Fleet Electrification</div><div class="ins-b">College vehicles including provost, RWESCK, TRECK transport emit 110 tCO₂e. EV fleet transition by 2030 eliminates this entirely.</div></div>
+<div class="ins pos"><div class="ins-t">🔋 Solar Backup Power</div><div class="ins-b">97 tCO₂e from diesel generators. Solar + battery storage at NCEL displaces ~40% generator runtime within 2 years.</div></div>
+</div></div>
+</div>
+</section>
+
+<!-- ===== SCOPE 2 ===== -->
+<section class="page" id="pg-s2">
+<div class="ph"><h2 style="color:var(--s2)">Scope 2 — Electricity Emissions</h2><p>Purchased electricity · Device-level audit across 11 buildings · 535.89 tCO₂e</p></div>
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Total Electricity Emissions</div><div class="kpi-val" style="color:var(--s2)">535.89<span class="kpi-unit">tCO₂e</span></div></div>
+<div class="kpi"><div class="kpi-lbl">Share of Footprint</div><div class="kpi-val" style="color:var(--s2)">27.8<span class="kpi-unit">%</span></div></div>
+<div class="kpi"><div class="kpi-lbl">Buildings Audited</div><div class="kpi-val">11</div><div class="kpi-delta d-neu">Device-level</div></div>
+<div class="kpi"><div class="kpi-lbl">Highest Emitter</div><div class="kpi-val" style="font-size:.85rem">Petroleum<br>Building</div><div class="kpi-delta d-neu">22,366 kgCO₂e</div></div>
+</div>
+<div class="g g2">
+<div class="card">
+<div class="ch"><div><div class="ct">Scope 2 by Building</div><div class="cs">kgCO₂e electricity</div></div></div>
+<div class="cb"><div style="height:280px"><canvas id="cBldgElec"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Building Emissions Table</div></div>
+<div class="cb" style="max-height:330px;overflow-y:auto">
+<table class="dt">
+<thead><tr><th>Building</th><th>S1 (kg)</th><th>S2 (kg)</th><th>S3 (kg)</th><th>Total (kg)</th></tr></thead>
+<tbody>
+<tr><td>Petroleum Bldg</td><td>7,582</td><td>1,751</td><td>13,034</td><td style="font-weight:700">22,366</td></tr>
+<tr><td>Bamfo Kwakye</td><td>4,077</td><td>1,322</td><td>9,823</td><td style="font-weight:700">15,222</td></tr>
+<tr><td>Levine Building</td><td>2,000</td><td>585</td><td>4,992</td><td style="font-weight:700">7,578</td></tr>
+<tr><td>New Eng. Bldg</td><td>4,634</td><td>1,826</td><td>591</td><td style="font-weight:700">7,051</td></tr>
+<tr><td>Kumapley Aud.</td><td>2,606</td><td>980</td><td>788</td><td style="font-weight:700">4,375</td></tr>
+<tr><td>Caesar Bldg</td><td>1,326</td><td>920</td><td>2,885</td><td style="font-weight:700">5,131</td></tr>
+<tr><td>Engineering Labs</td><td>1,423</td><td>655</td><td>505</td><td style="font-weight:700">2,584</td></tr>
+<tr><td>N Block</td><td>941</td><td>424</td><td>788</td><td style="font-weight:700">2,154</td></tr>
+<tr><td>Kwami Building</td><td>652</td><td>280</td><td>598</td><td style="font-weight:700">1,530</td></tr>
+<tr><td>Chemistry Block</td><td>457</td><td>355</td><td>591</td><td style="font-weight:700">1,403</td></tr>
+<tr><td>PB Tent</td><td>0</td><td>38</td><td>197</td><td style="font-weight:700">235</td></tr>
+<tr class="tr"><td>TOTAL</td><td>25,699</td><td>9,137</td><td>34,795</td><td>69,630</td></tr>
+</tbody></table></div></div>
+</div>
+</section>
+
+<!-- ===== SCOPE 3 ===== -->
+<section class="page" id="pg-s3">
+<div class="ph"><h2 style="color:var(--s3)">Scope 3 — Indirect Emissions</h2><p>Supply chain · Employee commuting · Student commuting · Waste · 896.08 tCO₂e</p></div>
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Total Scope 3</div><div class="kpi-val" style="color:var(--s3)">896.08<span class="kpi-unit">tCO₂e</span></div></div>
+<div class="kpi"><div class="kpi-lbl">Employee Commuting</div><div class="kpi-val" style="color:var(--s3)">515.10<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">57.5%</div></div>
+<div class="kpi"><div class="kpi-lbl">Student Commuting</div><div class="kpi-val" style="color:#8b5cf6">281.75<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">31.4%</div></div>
+<div class="kpi"><div class="kpi-lbl">Supply Chain (EEIO)</div><div class="kpi-val" style="color:var(--warn)">91.29<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">10.2%</div></div>
+</div>
+<div class="tabs">
+<button class="tab active" onclick="switchTab('sc3-sc',this,'sc3tabs')">Supply Chain</button>
+<button class="tab" onclick="switchTab('sc3-meth',this,'sc3tabs')">Method Comparison</button>
+<button class="tab" onclick="switchTab('sc3-mon',this,'sc3tabs')">Monthly Spend</button>
+</div>
+<div id="sc3tabs">
+<div class="tp active" id="tab-sc3-sc">
+<div class="g g2">
+<div class="card">
+<div class="ch"><div><div class="ct">Supply Chain by Category</div><div class="cs">2025 · tCO₂e</div></div>
+<div class="mt"><button class="mb active" onclick="setMeth('EEIO',this)">EEIO</button><button class="mb" onclick="setMeth('DEFRA',this)">DEFRA</button><button class="mb" onclick="setMeth('Hybrid',this)">Hybrid</button></div>
+</div>
+<div class="cb"><div style="height:290px"><canvas id="cScCat"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Category Detail Table — 2025</div></div>
+<div class="cb" style="max-height:370px;overflow-y:auto">
+<table class="dt">
+<thead><tr><th>Category</th><th>Spend (GH₵)</th><th>EEIO</th><th>DEFRA</th><th>Hybrid</th></tr></thead>
+<tbody>
+<tr><td>Electronics IT</td><td>1,002,739</td><td>23.0</td><td>26.3</td><td>31.8</td></tr>
+<tr><td>Stationery Office</td><td>315,231</td><td>12.2</td><td>10.8</td><td>12.2</td></tr>
+<tr><td>Furniture &amp; Fittings</td><td>405,619</td><td>11.8</td><td>10.0</td><td>11.8</td></tr>
+<tr><td>Cleaning &amp; Sanitation</td><td>294,591</td><td>10.2</td><td>9.7</td><td>10.2</td></tr>
+<tr><td>Construction &amp; Plumbing</td><td>298,703</td><td>10.1</td><td>10.5</td><td>10.1</td></tr>
+<tr><td>Lab Chemicals</td><td>104,616</td><td>5.8</td><td>4.6</td><td>5.8</td></tr>
+<tr><td>Batteries &amp; Power</td><td>150,925</td><td>4.7</td><td>6.9</td><td>3.6</td></tr>
+<tr><td>Electrical Materials</td><td>112,062</td><td>3.0</td><td>4.5</td><td>3.0</td></tr>
+<tr><td>Vehicle Parts</td><td>100,915</td><td>3.0</td><td>3.3</td><td>2.2</td></tr>
+<tr><td>Uniforms &amp; Textiles</td><td>62,245</td><td>2.8</td><td>3.6</td><td>2.8</td></tr>
+<tr><td>HVAC &amp; Refrigeration</td><td>87,190</td><td>2.0</td><td>2.2</td><td>5.4</td></tr>
+<tr><td>Tools &amp; Equipment</td><td>52,848</td><td>1.2</td><td>1.4</td><td>1.2</td></tr>
+<tr><td>Consumables</td><td>27,040</td><td>1.1</td><td>0.9</td><td>1.1</td></tr>
+<tr class="tr"><td>TOTAL</td><td>3,019,714</td><td>91.3</td><td>94.8</td><td>101.5</td></tr>
+</tbody></table></div></div>
+</div>
+</div>
+<div class="tp" id="tab-sc3-meth">
+<div class="card">
+<div class="ch"><div><div class="ct">Method Sensitivity 2023–2025</div><div class="cs">EEIO vs DEFRA vs Hybrid</div></div></div>
+<div class="cb"><div style="height:270px"><canvas id="cMethSens"></canvas></div>
+<div class="g g3" style="margin-top:.9rem;gap:.65rem">
+<div style="text-align:center;padding:.65rem;background:var(--surf2);border-radius:var(--r2)"><div style="font-size:.6rem;color:var(--txm);text-transform:uppercase;letter-spacing:.05em">EEIO</div><div style="font-size:1.1rem;font-weight:700;color:var(--p);font-family:var(--ff-d)">91.3 tCO₂e</div><div style="font-size:.62rem;color:var(--txm)">Selected method · 2025</div></div>
+<div style="text-align:center;padding:.65rem;background:var(--surf2);border-radius:var(--r2)"><div style="font-size:.6rem;color:var(--txm);text-transform:uppercase;letter-spacing:.05em">DEFRA</div><div style="font-size:1.1rem;font-weight:700;color:var(--s2);font-family:var(--ff-d)">94.8 tCO₂e</div><div style="font-size:.62rem;color:var(--txm)">+3.8% vs EEIO</div></div>
+<div style="text-align:center;padding:.65rem;background:var(--surf2);border-radius:var(--r2)"><div style="font-size:.6rem;color:var(--txm);text-transform:uppercase;letter-spacing:.05em">Hybrid</div><div style="font-size:1.1rem;font-weight:700;color:var(--s3);font-family:var(--ff-d)">101.5 tCO₂e</div><div style="font-size:.62rem;color:var(--txm)">+11.2% vs EEIO</div></div>
+</div></div></div>
+</div>
+<div class="tp" id="tab-sc3-mon">
+<div class="card">
+<div class="ch"><div><div class="ct">Monthly Spend &amp; Emissions — 2025</div><div class="cs">GH₵ spend vs EEIO tCO₂e</div></div></div>
+<div class="cb"><div style="height:280px"><canvas id="cMonthly"></canvas></div></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== TRENDS ===== -->
+<section class="page" id="pg-trends">
+<div class="ph"><h2>3-Year Trend Analysis</h2><p>Supply-chain Scope 3 · 2023 · 2024 · 2025</p></div>
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">2023 (EEIO)</div><div class="kpi-val">74.9<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">Baseline</div></div>
+<div class="kpi"><div class="kpi-lbl">2024 (EEIO)</div><div class="kpi-val">68.0<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-dn">▼ -9.2% vs 2023</div></div>
+<div class="kpi"><div class="kpi-lbl">2025 (EEIO)</div><div class="kpi-val">91.3<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-up">▲ +34.2% vs 2024</div></div>
+<div class="kpi"><div class="kpi-lbl">Spend Growth (3yr)</div><div class="kpi-val">+36%</div><div class="kpi-delta d-neu">GH₵ 2.2M → 3.0M</div></div>
+</div>
+<div class="g g2" style="margin-bottom:.9rem">
+<div class="card">
+<div class="ch"><div><div class="ct">Annual Emissions by Method</div><div class="cs">Grouped bar · tCO₂e</div></div></div>
+<div class="cb"><div style="height:235px"><canvas id="cTrend3y"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div><div class="ct">Top Category Evolution</div><div class="cs">2023 → 2024 → 2025 · EEIO</div></div></div>
+<div class="cb"><div style="height:235px"><canvas id="cCatEvol"></canvas></div></div>
+</div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Annual Comparison Table</div></div>
+<div class="cb">
+<table class="dt">
+<thead><tr><th>Year</th><th>Total Spend (GH₵)</th><th>EEIO (tCO₂e)</th><th>DEFRA (tCO₂e)</th><th>Hybrid (tCO₂e)</th><th>YoY Change (EEIO)</th></tr></thead>
+<tbody>
+<tr><td><b>2023</b></td><td>2,212,462</td><td>74.86</td><td>78.47</td><td>84.81</td><td>—</td></tr>
+<tr><td><b>2024</b></td><td>2,486,875</td><td>67.99</td><td>70.61</td><td>81.33</td><td><span class="badge bg-g">▼ -9.2%</span></td></tr>
+<tr><td><b>2025</b></td><td>3,019,714</td><td>91.29</td><td>94.78</td><td>101.47</td><td><span class="badge bg-o">▲ +34.2%</span></td></tr>
+<tr class="tr"><td>3-Year Total</td><td>7,719,051</td><td>234.14</td><td>243.86</td><td>267.61</td><td>+21.9% (3yr)</td></tr>
+</tbody></table></div></div>
+</section>
+
+<!-- ===== DEPARTMENTS ===== -->
+<section class="page" id="pg-depts">
+<div class="ph"><h2>Department-Level Emissions</h2><p>Supply-chain Scope 3 by unit · 2025 · EEIO method</p></div>
+<div class="g g2">
+<div class="card">
+<div class="ch"><div><div class="ct">Top 10 Emitting Units — 2025</div><div class="cs">EEIO tCO₂e</div></div></div>
+<div class="cb"><div style="height:330px"><canvas id="cDept"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Full Department Table — 2025</div></div>
+<div class="cb" style="max-height:380px;overflow-y:auto">
+<table class="dt">
+<thead><tr><th>Department / Unit</th><th>Spend (GH₵)</th><th>EEIO</th><th>DEFRA</th></tr></thead>
+<tbody>
+<tr><td>College of Engineering (central)</td><td>492,830</td><td>15.50</td><td>16.27</td></tr>
+<tr><td>Dept. of Mechanical Engineering</td><td>231,757</td><td>6.94</td><td>6.61</td></tr>
+<tr><td>Dept. of Petroleum Engineering</td><td>185,261</td><td>5.42</td><td>5.25</td></tr>
+<tr><td>RWESCK</td><td>169,345</td><td>5.85</td><td>5.97</td></tr>
+<tr><td>KNUST Eng. Edu. Project (KEEP)</td><td>124,812</td><td>3.41</td><td>3.55</td></tr>
+<tr><td>Dept. of Telecom Engineering</td><td>121,781</td><td>2.90</td><td>3.16</td></tr>
+<tr><td>Dept. of Civil Engineering</td><td>80,110</td><td>2.34</td><td>2.62</td></tr>
+<tr><td>Regional Transport Research (TRECK)</td><td>79,003</td><td>2.93</td><td>3.37</td></tr>
+<tr><td>Dept. of Geomatic Engineering</td><td>78,806</td><td>2.24</td><td>2.10</td></tr>
+<tr><td>Dept. of Computer Engineering</td><td>75,816</td><td>2.20</td><td>2.36</td></tr>
+<tr><td>Dept. of Electrical &amp; Electronic Eng.</td><td>68,489</td><td>1.77</td><td>1.91</td></tr>
+<tr><td>College Exams Office</td><td>67,741</td><td>2.65</td><td>2.39</td></tr>
+<tr><td>Dept. of Chemical Engineering</td><td>53,293</td><td>1.36</td><td>1.49</td></tr>
+<tr><td>Dept. of Geological Engineering</td><td>44,137</td><td>1.03</td><td>1.06</td></tr>
+<tr><td>Dept. of Materials Engineering</td><td>42,590</td><td>1.12</td><td>1.14</td></tr>
+<tr><td>NCEL (Net-Zero Carbon Emission Lab)</td><td>41,778</td><td>1.33</td><td>1.94</td></tr>
+<tr class="tr"><td>TOTAL (all units)</td><td>3,019,714</td><td>91.29</td><td>94.78</td></tr>
+</tbody></table></div></div>
+</div>
+</section>
+
+<!-- ===== COMMUTING ===== -->
+<section class="page" id="pg-commute">
+<div class="ph"><h2>Commuting Emissions Analysis</h2><p>1,115 students surveyed · Employee &amp; student transport modes · Academic year 2024/25</p></div>
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Employee Commuting</div><div class="kpi-val" style="color:var(--s3)">515.10<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">57.5% of Scope 3</div></div>
+<div class="kpi"><div class="kpi-lbl">Student Commuting</div><div class="kpi-val" style="color:#8b5cf6">281.75<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">31.4% of Scope 3</div></div>
+<div class="kpi"><div class="kpi-lbl">Students Surveyed</div><div class="kpi-val">1,115</div><div class="kpi-delta d-neu">Survey methodology</div></div>
+<div class="kpi"><div class="kpi-lbl">Total Commuting</div><div class="kpi-val">796.9<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">88.9% of Scope 3</div></div>
+</div>
+<div class="g g2" style="margin-bottom:.9rem">
+<div class="card">
+<div class="ch"><div><div class="ct">Student Transport Mode Share</div><div class="cs">Based on survey of 1,115 students</div></div></div>
+<div class="cb"><div style="height:235px"><canvas id="cCommMode"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div><div class="ct">Commuting Distance Distribution</div><div class="cs">% of students by distance band (km)</div></div></div>
+<div class="cb"><div style="height:235px"><canvas id="cCommDist"></canvas></div></div>
+</div>
+</div>
+<div class="card">
+<div class="ch"><div class="ct">Transport Challenges &amp; Decarbonisation Opportunities</div></div>
+<div class="cb">
+<div class="g g3" style="gap:.5rem">
+<div class="ins warn"><div class="ins-t">🚦 Long Waiting Times</div><div class="ins-b">Most-cited challenge for shuttle & trotro users — especially Brunei Complex residents (1.6 km, high ridership).</div></div>
+<div class="ins warn"><div class="ins-t">💰 High Transport Cost</div><div class="ins-b">Bolt/Uber users at >2 km report high cost as primary barrier to low-carbon choices.</div></div>
+<div class="ins info"><div class="ins-t">🚌 Unreliable Transit</div><div class="ins-b">Lack of reliable trotro & shuttle schedules affects uptake. Fixed-route e-shuttle could improve reliability.</div></div>
+<div class="ins info"><div class="ins-t">🏙️ Traffic Congestion</div><div class="ins-b">Engineering gate & Kumasi city traffic a key issue. Dedicated cycle & pedestrian paths can help.</div></div>
+<div class="ins pos"><div class="ins-t">🚶 Low-Carbon Walking Majority</div><div class="ins-b">~58% of students walk — a strong foundation. Student hostels within 1.5 km supports this naturally.</div></div>
+<div class="ins pos"><div class="ins-t">🌱 E-Shuttle Potential</div><div class="ins-b">Electric shuttle replacing trotro & private cars for 3–10 km distances could save ~100 tCO₂e/yr from student commuting alone.</div></div>
+</div></div></div>
+</section>
+
+<!-- ===== BUILDINGS ===== -->
+<section class="page" id="pg-bldgs">
+<div class="ph"><h2>Buildings &amp; Laboratory Emissions</h2><p>Scope 1, 2 &amp; 3 at facility level · Device-level energy audit · 11 buildings · kgCO₂e</p></div>
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Total Building Footprint</div><div class="kpi-val">69,630<span class="kpi-unit">kgCO₂e</span></div></div>
+<div class="kpi"><div class="kpi-lbl">Buildings Audited</div><div class="kpi-val">11</div></div>
+<div class="kpi"><div class="kpi-lbl">Top Emitter</div><div class="kpi-val" style="font-size:.8rem">Petroleum Bldg</div><div class="kpi-delta d-neu">22,366 kgCO₂e</div></div>
+<div class="kpi"><div class="kpi-lbl">Scope 2 Share (Bldgs)</div><div class="kpi-val" style="color:var(--s2)">13.1<span class="kpi-unit">%</span></div></div>
+</div>
+<div class="g g2">
+<div class="card">
+<div class="ch"><div><div class="ct">Total Emissions by Building</div><div class="cs">Scope 1+2+3 · kgCO₂e</div></div></div>
+<div class="cb"><div style="height:285px"><canvas id="cBldgTotal"></canvas></div></div>
+</div>
+<div class="card">
+<div class="ch"><div><div class="ct">Scope Breakdown by Building</div><div class="cs">Stacked S1 + S2 + S3</div></div></div>
+<div class="cb"><div style="height:285px"><canvas id="cBldgStack"></canvas></div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== PATHWAY ===== -->
+<section class="page" id="pg-pathway">
+<div class="ph"><h2>Net-Zero Reduction Pathway</h2><p>Projected trajectory · Interventions · 2025–2040 · KNUST CoE</p></div>
+<div class="g g4" style="margin-bottom:.9rem">
+<div class="kpi"><div class="kpi-lbl">Current Baseline</div><div class="kpi-val">1,927<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">2025</div></div>
+<div class="kpi"><div class="kpi-lbl">Net-Zero Target</div><div class="kpi-val" style="color:var(--ok)">0<span class="kpi-unit">tCO₂e</span></div><div class="kpi-delta d-neu">2040</div></div>
+<div class="kpi"><div class="kpi-lbl">Annual Reduction</div><div class="kpi-val">128<span class="kpi-unit">t/yr</span></div><div class="kpi-delta d-neu">Linear path</div></div>
+<div class="kpi"><div class="kpi-lbl">Biggest Lever</div><div class="kpi-val" style="font-size:.8rem">Commuting</div><div class="kpi-delta d-neu">46.5% of total</div></div>
+</div>
+<div class="card" style="margin-bottom:.9rem">
+<div class="ch"><div><div class="ct">Net-Zero Trajectory 2025–2040</div><div class="cs">BAU · Linear target · Accelerated pathway · tCO₂e</div></div></div>
+<div class="cb"><div style="height:275px"><canvas id="cPathway"></canvas></div></div>
+</div>
+<div class="g g3">
+<div class="card">
+<div class="ch"><div class="ct">Priority Interventions</div></div>
+<div class="cb">
+<div class="ins pos"><div class="ins-t">1. E-Shuttle &amp; Cycle Infrastructure</div><div class="ins-b">Replace trotro & private car commuters with electric shuttles + cycling. Potential: ~280 tCO₂e/yr (Scope 3).</div></div>
+<div class="ins pos"><div class="ins-t">2. Campus Solar PV + Battery</div><div class="ins-b">Displace ECG grid electricity & diesel generators. Target: ~400 tCO₂e/yr (Scope 1+2).</div></div>
+<div class="ins pos"><div class="ins-t">3. Refrigerant Management</div><div class="ins-b">Low-GWP AC refrigerant retrofits across all buildings. Target: ~150 tCO₂e/yr (Scope 1 fugitive).</div></div>
+</div></div>
+<div class="card">
+<div class="ch"><div class="ct">Scope Reduction Targets</div></div>
+<div class="cb">
+<div class="sbr"><div class="sbr-lbl" style="color:var(--s1)">Scope 1</div><div class="sbr-track"><div class="sbr-fill" style="width:75%;background:var(--s1)"></div></div><div class="sbr-val">-75% by 2035</div></div>
+<div class="sbr"><div class="sbr-lbl" style="color:var(--s2)">Scope 2</div><div class="sbr-track"><div class="sbr-fill" style="width:90%;background:var(--s2)"></div></div><div class="sbr-val">-90% by 2033</div></div>
+<div class="sbr"><div class="sbr-lbl" style="color:var(--s3)">Scope 3</div><div class="sbr-track"><div class="sbr-fill" style="width:60%;background:var(--s3)"></div></div><div class="sbr-val">-60% by 2037</div></div>
+<div class="div"></div>
+<div style="font-size:.67rem;color:var(--txm)">Residual emissions offset via Enhanced Rock Weathering (KREW) and verified carbon credits aligned with Verra/Gold Standard MRV protocols developed at NCEL.</div>
+</div></div>
+<div class="card">
+<div class="ch"><div class="ct">KREW Offset Potential</div></div>
+<div class="cb">
+<div class="ins info"><div class="ins-t">🪨 Enhanced Rock Weathering</div><div class="ins-b">KNUST Rock Enhanced Weathering (KREW) applies silicate rock dust to agricultural soils across Ghana. CDR potential: 50–200 tCO₂e/yr per deployment site.</div></div>
+<div class="ins info"><div class="ins-t">📊 MRV Framework</div><div class="ins-b">NCEL developing rigorous Measurement, Reporting & Verification protocols for ERW carbon credits. Supports future carbon market participation.</div></div>
+</div></div>
+</div>
+</section>
+
+</div><!-- /content -->
+</main>
+</div><!-- /app -->
+
+<script>
+const D={
+  years:['2023','2024','2025'],
+  s3:{
+    '2023':{EEIO:74.86,DEFRA:78.47,Hybrid:84.81,spend:2212462},
+    '2024':{EEIO:67.99,DEFRA:70.61,Hybrid:81.33,spend:2486875},
+    '2025':{EEIO:91.29,DEFRA:94.78,Hybrid:101.47,spend:3019714}
+  },
+  cats:{
+    lbl:['Electronics IT','Stationery','Furniture','Cleaning','Construction','Lab Chem.','Batteries','Electrical','Vehicle Pts','Uniforms','HVAC','Tools','Consumables'],
+    EEIO:[22.96,12.22,11.84,10.22,10.11,5.82,4.73,3.04,3.02,2.78,2.02,1.24,1.09],
+    DEFRA:[26.27,10.83,9.97,9.72,10.45,4.58,6.89,4.51,3.26,3.61,2.19,1.41,0.94],
+    Hybrid:[31.78,12.22,11.84,10.22,10.11,5.82,3.58,3.04,2.22,2.78,5.35,1.24,1.09]
+  },
+  cats23:{EEIO:[10.75,8.82,9.48,4.97,4.35,7.76,5.35,2.91,3.56,0,0.91,1.01,0]},
+  cats24:{EEIO:[15.81,7.78,5.69,5.32,6.64,4.82,3.25,1.55,1.75,0.89,1.14,0.22,0]},
+  mon25:{
+    lbl:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    spend:[213647,390776,385866,338731,225977,268384,267186,189360,41907,291062,285756,121064],
+    EEIO:[5.50,10.12,8.55,8.63,5.91,10.50,11.07,6.66,1.07,9.11,10.23,3.95]
+  },
+  bldg:{
+    lbl:['Petroleum','Bamfo Kwakye','Levine','New Eng.','Kumapley','Caesar','Eng. Labs','N Block','Kwami','Chem. Block','PB Tent'],
+    s1:[7582,4077,2000,4634,2606,1326,1423,941,652,457,0],
+    s2:[1751,1322,585,1826,980,920,655,424,280,355,38],
+    s3:[13034,9823,4992,591,788,2885,505,788,598,591,197],
+    tot:[22366,15222,7578,7051,4375,5131,2584,2154,1530,1403,235]
+  },
+  depts:{
+    lbl:['CoE Central','Mechanical','Petroleum','RWESCK','KEEP','Telecom','Civil','TRECK','Geomatic','Computer','EEE','Exams Office','Chemical','Geological'],
+    EEIO:[15.50,6.94,5.42,5.85,3.41,2.90,2.34,2.93,2.24,2.20,1.77,2.65,1.36,1.03]
+  }
+};
+
+const PAL={
+  s1:'rgb(200,73,129)',s2:'rgb(77,133,190)',s3:'rgb(57,132,60)',
+  g:'rgb(57,132,60)',w:'rgb(242,185,30)',
+  cats:['#f2b91e','#4d85be','#39843c','#c84981','#782B61','#BE233A','#eae300','#8a6d3b','#428bca','#5cb85c','#C84981','#4D85BE','#39843C','#f0ad4e']
+};
+let charts={};
+
+const isDk=()=>document.documentElement.getAttribute('data-theme')==='dark';
+const txC=()=>isDk()?'rgba(205,228,205,.85)':'rgba(13,31,13,.85)';
+const gdC=()=>isDk()?'rgba(40,56,40,.45)':'rgba(185,205,185,.45)';
+const sfC=()=>isDk()?'#0f160f':'#ffffff';
+
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=11;
+
+const baseOpts=(extra={})=>({
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:sfC(),titleColor:txC(),bodyColor:txC(),borderColor:gdC(),borderWidth:1,padding:10,cornerRadius:8}},
+  ...extra
+});
+
+function kc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function mkDonut(id,labels,data,colors){
+  kc(id);const el=document.getElementById(id);if(!el)return;
+  charts[id]=new Chart(el,{type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:sfC()}]},
+    options:{...baseOpts(),cutout:'65%',plugins:{...baseOpts().plugins,legend:{display:true,position:'bottom',labels:{color:txC(),boxWidth:9,padding:9,font:{size:10}}}}}
+  });
+}
+
+function mkBar(id,labels,datasets,opts={}){
+  kc(id);const el=document.getElementById(id);if(!el)return;
+  charts[id]=new Chart(el,{type:'bar',
+    data:{labels,datasets},
+    options:{...baseOpts(),scales:{
+      x:{ticks:{color:txC(),...(opts.xFont||{})},grid:{color:gdC()},...opts.xAxis},
+      y:{ticks:{color:txC()},grid:{color:gdC()},...(opts.yAxis||{})}
+    },plugins:{...baseOpts().plugins,...(opts.legend?{legend:{display:true,position:'bottom',labels:{color:txC(),boxWidth:9,padding:9}}}:{})},
+    ...opts.extra}
+  });
+}
+
+function mkLine(id,labels,datasets,opts={}){
+  kc(id);const el=document.getElementById(id);if(!el)return;
+  charts[id]=new Chart(el,{type:'line',data:{labels,datasets},
+    options:{...baseOpts(),scales:{
+      x:{ticks:{color:txC(),...(opts.xFont||{})},grid:{color:gdC()}},
+      y:{ticks:{color:txC()},grid:{color:gdC()},...(opts.yAxis||{})}
+    },plugins:{...baseOpts().plugins,...(opts.legend?{legend:{display:true,position:'bottom',labels:{color:txC(),boxWidth:9,padding:9}}}:{})}}
+  });
+}
+
+let curMeth='EEIO';
+
+function initCharts(){
+  // Overview
+  mkDonut('cScopeDonut',['Scope 1','Scope 2','Scope 3'],[495.43,535.89,896.08],[PAL.s1,PAL.s2,PAL.s3]);
+  mkDonut('cSc3Contrib',['Employee','Student','Supply Chain','Waste'],[515.10,281.75,91.29,7.94],[PAL.s3,'#8b5cf6',PAL.w,'#80a080']);
+  mkBar('cTrend',D.years,[
+    {label:'EEIO',data:D.years.map(y=>D.s3[y].EEIO),backgroundColor:PAL.g+'aa',borderRadius:6},
+    {label:'DEFRA',data:D.years.map(y=>D.s3[y].DEFRA),backgroundColor:PAL.s2+'aa',borderRadius:6},
+    {label:'Hybrid',data:D.years.map(y=>D.s3[y].Hybrid),backgroundColor:PAL.s3+'aa',borderRadius:6}
+  ],{legend:true});
+
+  // Footprint
+  mkDonut('cS1Break',['Fugitive','Vehicles','Diesel'],[287.98,110.26,97.20],[PAL.s1,'#e0a830','rgb(200,110,70)']);
+  mkBar('cFpBar',['Scope 1','Scope 2','Scope 3'],[
+    {label:'tCO₂e',data:[495.43,535.89,896.08],backgroundColor:[PAL.s1,PAL.s2,PAL.s3],borderRadius:8}
+  ]);
+
+  // Scope 1
+  mkDonut('cS1Donut',['Fugitive Emissions','Fleet Vehicles','Diesel Power Gen.'],[287.98,110.26,97.20],[PAL.s1,'#e0a830','rgb(200,100,60)']);
+
+  // Scope 2
+  mkBar('cBldgElec',D.bldg.lbl,[
+    {label:'Scope 2 (kgCO₂e)',data:D.bldg.s2,backgroundColor:PAL.s2+'bb',borderRadius:5}
+  ],{xFont:{},xAxis:{},extra:{indexAxis:'y'},yAxis:{ticks:{color:txC(),font:{size:9.5}}}});
+
+  // Scope 3
+  drawScCat(curMeth);
+  mkLine('cMethSens',D.years,[
+    {label:'EEIO',data:D.years.map(y=>D.s3[y].EEIO),borderColor:PAL.g,fill:false,tension:.4,pointRadius:5},
+    {label:'DEFRA',data:D.years.map(y=>D.s3[y].DEFRA),borderColor:PAL.s2,fill:false,tension:.4,pointRadius:5},
+    {label:'Hybrid',data:D.years.map(y=>D.s3[y].Hybrid),borderColor:PAL.s3,fill:false,tension:.4,pointRadius:5}
+  ],{legend:true,yAxis:{title:{display:true,text:'tCO₂e',color:txC()}}});
+
+  kc('cMonthly');const mc=document.getElementById('cMonthly');if(mc){
+    charts.cMonthly=new Chart(mc,{type:'bar',
+      data:{labels:D.mon25.lbl,datasets:[
+        {label:'Spend (GH₵/1000)',data:D.mon25.spend.map(v=>v/1000),backgroundColor:PAL.s2+'55',yAxisID:'y',borderRadius:4},
+        {label:'EEIO (tCO₂e)',data:D.mon25.EEIO,type:'line',borderColor:PAL.g,backgroundColor:'transparent',yAxisID:'y1',tension:.4,pointRadius:4}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{
+        x:{ticks:{color:txC()},grid:{color:gdC()}},
+        y:{ticks:{color:txC()},grid:{color:gdC()},title:{display:true,text:'GH₵ thousands',color:txC()}},
+        y1:{type:'linear',position:'right',ticks:{color:PAL.g},grid:{display:false},title:{display:true,text:'tCO₂e',color:PAL.g}}
+      },plugins:{tooltip:{backgroundColor:sfC(),titleColor:txC(),bodyColor:txC()},
+        legend:{display:true,position:'bottom',labels:{color:txC(),boxWidth:9,padding:9}}}}
+    });
+  }
+
+  // Trends
+  mkBar('cTrend3y',D.years,[
+    {label:'EEIO',data:D.years.map(y=>D.s3[y].EEIO),backgroundColor:PAL.g+'bb',borderRadius:6},
+    {label:'DEFRA',data:D.years.map(y=>D.s3[y].DEFRA),backgroundColor:PAL.s2+'bb',borderRadius:6},
+    {label:'Hybrid',data:D.years.map(y=>D.s3[y].Hybrid),backgroundColor:PAL.s3+'bb',borderRadius:6}
+  ],{legend:true});
+  mkLine('cCatEvol',D.cats.lbl.slice(0,7),[
+    {label:'2023',data:D.cats23.EEIO.slice(0,7),borderColor:'#999',fill:false,tension:.3,pointRadius:4,borderDash:[4,3]},
+    {label:'2024',data:D.cats24.EEIO.slice(0,7),borderColor:PAL.s2,fill:false,tension:.3,pointRadius:4},
+    {label:'2025',data:D.cats.EEIO.slice(0,7),borderColor:PAL.g,fill:false,tension:.3,pointRadius:5,borderWidth:2.5}
+  ],{legend:true,xFont:{font:{size:9},maxRotation:35}});
+
+  // Departments
+  const topDepts=[...D.depts.lbl.map((l,i)=>({l,v:D.depts.EEIO[i]}))].sort((a,b)=>b.v-a.v).slice(0,10);
+  mkBar('cDept',topDepts.map(d=>d.l),[
+    {label:'EEIO (tCO₂e)',data:topDepts.map(d=>d.v),backgroundColor:PAL.cats.slice(0,10),borderRadius:5}
+  ],{xFont:{},xAxis:{},extra:{indexAxis:'y'},yAxis:{ticks:{color:txC(),font:{size:9.5}}}});
+
+  // Commuting
+  mkDonut('cCommMode',['Walking','Shuttle','Trotro','Bolt/Uber/Yango','Private Car'],[58,18,14,7,3],[PAL.g,PAL.s2,PAL.s1,PAL.s3,PAL.w]);
+  mkBar('cCommDist',['<0.5km','0.5–1km','1–2km','2–3km','3–5km','>5km'],[
+    {label:'% Students',data:[12,31,28,14,9,6],backgroundColor:PAL.s3+'cc',borderRadius:5}
+  ],{yAxis:{title:{display:true,text:'% of Students',color:txC()}}});
+
+  // Buildings
+  mkBar('cBldgTotal',D.bldg.lbl,[
+    {label:'Total (kgCO₂e)',data:D.bldg.tot,backgroundColor:PAL.cats.slice(0,11),borderRadius:5}
+  ],{xFont:{},xAxis:{},extra:{indexAxis:'y'},yAxis:{ticks:{color:txC(),font:{size:9.5}}}});
+  kc('cBldgStack');const bs=document.getElementById('cBldgStack');if(bs){
+    charts.cBldgStack=new Chart(bs,{type:'bar',
+      data:{labels:D.bldg.lbl,datasets:[
+        {label:'Scope 1',data:D.bldg.s1,backgroundColor:PAL.s1+'cc'},
+        {label:'Scope 2',data:D.bldg.s2,backgroundColor:PAL.s2+'cc'},
+        {label:'Scope 3',data:D.bldg.s3,backgroundColor:PAL.s3+'cc'}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{
+        x:{stacked:true,ticks:{color:txC(),font:{size:9},maxRotation:38},grid:{color:gdC()}},
+        y:{stacked:true,ticks:{color:txC()},grid:{color:gdC()}}
+      },plugins:{tooltip:{backgroundColor:sfC(),titleColor:txC(),bodyColor:txC()},
+        legend:{display:true,position:'bottom',labels:{color:txC(),boxWidth:9,padding:9}}}}
+    });
+  }
+
+  // Pathway
+  const pyrs=[2025,2026,2027,2028,2029,2030,2032,2034,2037,2040];
+  const linPath=pyrs.map(y=>Math.max(0,1927-(y-2025)*128));
+  const accel=pyrs.map(y=>Math.max(0,1927*(1-Math.pow((y-2025)/15,1.25))));
+  mkLine('cPathway',pyrs,[
+    {label:'Business As Usual',data:pyrs.map(()=>1927),borderColor:'#e05050',borderDash:[6,4],fill:false,tension:0,pointRadius:0,borderWidth:2},
+    {label:'Linear Target',data:linPath,borderColor:PAL.s2,fill:false,tension:.3,pointRadius:4,borderWidth:2},
+    {label:'Accelerated Net-Zero',data:accel,borderColor:PAL.g,backgroundColor:PAL.g+'18',fill:'origin',tension:.4,pointRadius:4,borderWidth:2.5}
+  ],{legend:true,yAxis:{min:0,title:{display:true,text:'tCO₂e',color:txC()}}});
+}
+
+function drawScCat(m){
+  kc('cScCat');const el=document.getElementById('cScCat');if(!el)return;
+  charts.cScCat=new Chart(el,{type:'bar',
+    data:{labels:D.cats.lbl,datasets:[{label:`${m} (tCO₂e)`,data:D.cats[m],backgroundColor:PAL.cats,borderRadius:5}]},
+    options:{...baseOpts(),indexAxis:'y',scales:{
+      x:{ticks:{color:txC()},grid:{color:gdC()}},
+      y:{ticks:{color:txC(),font:{size:9.5}},grid:{color:gdC()}}
+    }}
+  });
+}
+
+const PAGES={overview:'Executive Summary',footprint:'Full Footprint 2025',s1:'Scope 1 — Direct',s2:'Scope 2 — Electricity',s3:'Scope 3 — Indirect',trends:'Trend Analysis',depts:'Departments',commute:'Commuting',bldgs:'Buildings & Labs',pathway:'Transition Pathway'};
+
+function goPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('ptitle').textContent=PAGES[id]||id;
+  setTimeout(initCharts,60);
+}
+
+function switchTab(tid,btn,grp){
+  const g=document.getElementById(grp);
+  g.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tid).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setMeth(m,btn){
+  curMeth=m;
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawScCat(m);
+}
+
+function setYr(y,btn){
+  document.querySelectorAll('.yb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleDark(){
+  const h=document.documentElement;
+  h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');
+  setTimeout(initCharts,80);
+}
+
+window.addEventListener('load',()=>setTimeout(initCharts,100));
+</script>
+</body>
+</html>

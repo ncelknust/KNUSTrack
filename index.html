@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>KNUSTrack — KNUST College of Engineering Net-Zero Emissions Platform</title>
+<link rel="icon" type="image/svg+xml" href="assets/logomark.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+--bg:#0d1308;--surf:#141c0d;--surf2:#1a2411;--surfoff:#11180b;--surfdyn:#26311b;
+--div:#223016;--bdr:#33441f;--bdr2:#44562b;
+--tx:#f5f1dc;--txm:#cabb86;--txf:#8a916a;
+--p:#f2b91e;--ph:#ffd45e;--pa:#ffe39a;--ph2:#3a3211;
+--s1:#c84981;--s2:#4d85be;--s3:#5aa64f;--ok:#39843c;
+--shadow:0 14px 44px rgba(0,0,0,.55);
+--ff-d:'Merriweather',Georgia,serif;--ff-b:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--ff-b);-webkit-font-smoothing:antialiased;line-height:1.55;
+ background-image:radial-gradient(120% 90% at 88% -10%, rgba(242,185,30,.10) 0%, transparent 46%),radial-gradient(90% 80% at -8% 8%, rgba(57,132,60,.10) 0%, transparent 52%);}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 26px}
+h1,h2,h3{font-family:var(--ff-d)}
+/* nav */
+nav{position:sticky;top:0;z-index:30;background:rgba(13,19,8,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--bdr)}
+.nav-in{display:flex;align-items:center;gap:20px;height:66px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .lm{display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+.brand .bt{font-family:var(--ff-d);font-weight:900;font-size:17px;letter-spacing:-.01em;line-height:1.05}
+.brand .bt small{display:block;font-family:var(--ff-b);font-size:10px;font-weight:600;color:var(--txf);letter-spacing:.4px;margin-top:2px}
+.brand .bt b{color:var(--p)}
+.nav-links{margin-left:auto;display:flex;gap:26px;align-items:center}
+.nav-links a{font-size:13.5px;color:var(--txm);font-weight:600}
+.nav-links a:hover{color:var(--p)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;border-radius:11px;cursor:pointer;border:1px solid transparent;padding:11px 19px;transition:.15s;font-family:var(--ff-b)}
+.btn svg{width:17px;height:17px}
+.btn-p{background:linear-gradient(135deg,var(--p),var(--ph));color:#2a2100;box-shadow:0 6px 18px rgba(242,185,30,.22)}
+.btn-p:hover{filter:brightness(1.06)}
+.btn-o{background:var(--surf2);color:var(--tx);border-color:var(--bdr2)}
+.btn-o:hover{border-color:var(--p);color:var(--p)}
+/* hero */
+.hero{padding:70px 0 54px;border-bottom:1px solid var(--bdr)}
+.hero-in{display:grid;grid-template-columns:1.55fr .82fr;gap:44px;align-items:center}
+@media(max-width:900px){.hero-in{grid-template-columns:1fr;gap:32px}}
+.flagdot{display:inline-flex;gap:3px;margin-right:9px;vertical-align:middle}
+.flagdot i{width:8px;height:8px;border-radius:50%}
+.flagdot .r{background:#ce1126}.flagdot .y{background:#fcd116}.flagdot .g{background:#0e7c4a}
+.eyebrow{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txm);margin-bottom:20px}
+h1.hh{font-family:var(--ff-d);font-size:clamp(26px,2.85vw,37px);line-height:1.18;letter-spacing:-.01em;font-weight:900;margin:4px 0 2px}
+h1.hh .hl{color:var(--p)}
+.pillline{font-family:var(--ff-d);font-weight:700;font-size:clamp(16px,1.7vw,22px);margin:18px 0 4px;letter-spacing:.01em}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.hero-meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px 0;font-size:12.5px;color:var(--txm)}
+.hero-meta span{padding:0 16px;border-right:1px solid var(--bdr);line-height:1.1}
+.hero-meta span:first-child{padding-left:0}
+.hero-meta span:last-child{border-right:none;padding-right:0}
+.hero-meta b{color:var(--tx);font-family:var(--ff-d)}
+/* snapshot */
+.snap{background:linear-gradient(180deg,var(--surf2),rgba(20,28,13,.6));border:1px solid var(--bdr);border-radius:18px;box-shadow:var(--shadow);padding:20px}
+.snap .sh{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--txf);margin-bottom:14px;text-transform:uppercase}
+.snap .sh .dot{width:8px;height:8px;border-radius:50%;background:var(--p);box-shadow:0 0 0 4px rgba(242,185,30,.16)}
+.snap .big{font-family:var(--ff-d);font-size:46px;font-weight:900;line-height:1;color:var(--tx)}
+.snap .big small{font-size:16px;color:var(--txm);font-weight:700;font-family:var(--ff-b)}
+.snap .cap{font-size:11.5px;color:var(--txf);margin:6px 0 16px;line-height:1.5}
+.bars .b{display:grid;grid-template-columns:66px 1fr 92px;align-items:center;gap:9px;font-size:12px;margin:9px 0}
+.bars .b .nm{color:var(--txm);font-weight:600}
+.bars .b .tr{height:9px;background:var(--surfdyn);border-radius:5px;overflow:hidden}
+.bars .b .tr i{display:block;height:100%;border-radius:5px}
+.bars .b .vv{text-align:right;font-weight:800;color:var(--tx);font-family:var(--ff-d);font-size:11.5px}
+.snap .foot{font-size:11.5px;color:var(--txf);margin-top:16px;border-top:1px solid var(--bdr);padding-top:12px;line-height:1.5}
+/* sections */
+section.blk{padding:60px 0}
+.ey2{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--p);text-align:center}
+h2{font-size:clamp(23px,2.9vw,32px);font-weight:900;text-align:center;margin:8px 0 10px;letter-spacing:-.01em}
+.lead{font-size:15px;color:var(--txm);text-align:center;max-width:64ch;margin:0 auto 36px;line-height:1.6}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:840px){.cards{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,var(--surf),rgba(20,28,13,.5));border:1px solid var(--bdr);border-radius:16px;padding:24px;transition:.16s}
+.card:hover{border-color:var(--bdr2);transform:translateY(-2px)}
+.card .ic{width:46px;height:46px;border-radius:12px;background:rgba(242,185,30,.12);display:grid;place-items:center;margin-bottom:15px}
+.card .ic svg{width:24px;height:24px;stroke:var(--p);fill:none;stroke-width:1.8}
+.card h3{font-size:16.5px;margin:0 0 7px;font-weight:700}
+.card p{font-size:13.5px;color:var(--txm);margin:0;line-height:1.55}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:st}
+@media(max-width:840px){.steps{grid-template-columns:1fr}}
+.step{background:var(--surf2);border:1px solid var(--bdr);border-radius:16px;padding:26px 24px;position:relative}
+.step::before{counter-increment:st;content:counter(st);position:absolute;top:-15px;left:24px;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--ph));color:#2a2100;display:grid;place-items:center;font-weight:800;font-size:15px;font-family:var(--ff-d)}
+.step h3{font-size:16px;margin:10px 0 6px}
+.step p{font-size:13.5px;color:var(--txm);margin:0;line-height:1.5}
+.findings{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:840px){.findings{grid-template-columns:1fr}}
+.finding{background:linear-gradient(160deg,rgba(242,185,30,.10),rgba(20,28,13,.5));border:1px solid rgba(242,185,30,.22);border-radius:16px;padding:26px}
+.finding .n{font-size:33px;font-weight:900;color:var(--p);line-height:1;font-family:var(--ff-d)}
+.finding .t{font-size:13px;color:var(--txm);margin-top:9px;line-height:1.5}
+/* footer */
+footer{padding:44px 0;border-top:1px solid var(--bdr);margin-top:24px;font-size:12.5px;color:var(--txf)}
+.foot-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer b{color:var(--txm)}
+</style>
+</head>
+<body>
+<nav><div class="wrap nav-in">
+  <a class="brand" href="index.html">
+    <svg class="lm" viewBox="0 0 48 48" width="40" height="40" aria-label="KNUSTrack"><defs><linearGradient id="nvt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7c948"/><stop offset=".55" stop-color="#f2b91e"/><stop offset="1" stop-color="#3f8a3f"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#nvt)"/><path d="M10 15 L18 23 L26 18.5 L33 26" fill="none" stroke="#12200a" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="15" r="2.5" fill="#12200a"/><path d="M33 26 c 5.4 -2.2 10.4 -0.6 12.2 4.4 c -5.4 2.2 -10.4 0.6 -12.2 -4.4 Z" fill="#12200a"/></svg>
+    <div class="bt"><b>KNUST</b>rack<small>KNUST · College of Engineering</small></div>
+  </a>
+  <div class="nav-links">
+    <a href="#inventory">Inventory</a><a href="#how">How it works</a><a href="#findings">Findings</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap hero-in">
+  <div>
+    <span class="eyebrow"><span class="flagdot"><i class="r"></i><i class="y"></i><i class="g"></i></span>KNUST · College of Engineering · NCEL</span>
+    <h1 class="hh">The carbon-intelligence platform for KNUST's journey to <span class="hl">net zero by 2040.</span></h1>
+    <div class="pillline"><span style="color:var(--p)">Measure.</span> <span style="color:var(--s2)">Track.</span> <span style="color:var(--s3)">Decarbonise.</span></div>
+    <div class="hero-btns">
+      <a class="btn btn-p" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="#2a2100" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Open the dashboard</a>
+      <a class="btn btn-o" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Explore the inventory</a>
+    </div>
+    <div class="hero-meta"><span><b>2023–2025</b> · baseline study</span><span><b>3</b> emission scopes</span><span><b>11</b> buildings audited</span><span><b>1,115</b> students surveyed</span></div>
+  </div>
+  <div class="snap">
+    <div class="sh"><span class="dot"></span> Footprint snapshot · 2025</div>
+    <div class="big">1,927 <small>tCO₂e</small></div>
+    <div class="cap">Total College of Engineering greenhouse-gas footprint across Scopes 1, 2 &amp; 3</div>
+    <div class="bars">
+      <div class="b"><span class="nm">Scope 1</span><span class="tr"><i style="width:55%;background:var(--s1)"></i></span><span class="vv">495 · 25.7%</span></div>
+      <div class="b"><span class="nm">Scope 2</span><span class="tr"><i style="width:60%;background:var(--s2)"></i></span><span class="vv">536 · 27.8%</span></div>
+      <div class="b"><span class="nm">Scope 3</span><span class="tr"><i style="width:100%;background:var(--s3)"></i></span><span class="vv">896 · 46.5%</span></div>
+    </div>
+    <div class="foot">Scope 3 (commuting &amp; supply chain) is the largest share. A linear path to net zero implies ≈128 tCO₂e of reductions each year.</div>
+  </div>
+</div></header>
+
+<section class="blk" id="inventory"><div class="wrap">
+  <div class="ey2">The platform</div>
+  <h2>The whole campus footprint, in one place</h2>
+  <p class="lead">A complete, auditable greenhouse-gas inventory for the College of Engineering — built from procurement records, a device-level energy audit and a campus commuting survey, and presented as an interactive dashboard.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><h3>Executive summary</h3><p>The full 1,927 tCO₂e footprint at a glance — every scope, its share, and the key insights driving the numbers.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 4"/></svg></div><h3>Scope 1, 2 &amp; 3 inventory</h3><p>Direct emissions, purchased electricity and indirect emissions, each broken down to its underlying sources with clear methodology.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><h3>Buildings &amp; laboratories</h3><p>A device-level energy audit across eleven buildings, ranking facilities from the Petroleum Building down to the smallest block.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><h3>Commuting analytics</h3><p>Employee and student travel modelled from a survey of 1,115 students — mode share, distance bands and decarbonisation options.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><h3>Three-year trends</h3><p>Supply-chain emissions across 2023–2025 under three emission-factor methods (EEIO, DEFRA and Hybrid) for full transparency.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Net-zero pathway</h3><p>A costed trajectory to 2040 — priority interventions plus residual-emission offsets through Enhanced Rock Weathering (KREW).</p></div>
+  </div>
+</div></section>
+
+<section class="blk" id="how" style="border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:rgba(20,28,13,.35)"><div class="wrap">
+  <div class="ey2">How it works</div>
+  <h2>From campus records to a credible baseline</h2>
+  <p class="lead">The inventory follows the GHG Protocol and rests on data the College already keeps — no new instrumentation is required to begin.</p>
+  <div class="steps">
+    <div class="step"><h3>Activity data in</h3><p>Procurement spend, metered electricity, fleet and generator fuel, refrigerant records and a campus commuting survey.</p></div>
+    <div class="step"><h3>Emission-factor methods</h3><p>Spend converted with EEIO, DEFRA and Hybrid factors; a device-level energy audit; and a distance-based commuting model.</p></div>
+    <div class="step"><h3>Decisions out</h3><p>Scope and department hotspots, building rankings, three-year trends and a net-zero pathway — all interactive and re-runnable.</p></div>
+  </div>
+</div></section>
+
+<section class="blk" id="findings"><div class="wrap">
+  <div class="ey2">Headline findings</div>
+  <h2>What the baseline establishes</h2>
+  <p class="lead">A defensible 2025 baseline for the College of Engineering — and a clear, prioritised route to eliminating the footprint.</p>
+  <div class="findings">
+    <div class="finding"><div class="n">1,927</div><div class="t">tCO₂e total footprint in 2025 across Scopes 1, 2 and 3 — the College of Engineering's first complete baseline.</div></div>
+    <div class="finding"><div class="n">46.5%</div><div class="t">of emissions sit in Scope 3 — dominated by staff and student commuting, followed by the procurement supply chain.</div></div>
+    <div class="finding"><div class="n">2040</div><div class="t">net-zero target — a linear path of ≈128 tCO₂e/yr, led by e-shuttles, campus solar and refrigerant management, with KREW offsets for the residual.</div></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap foot-in">
+  <div><b>KNUSTrack</b> — Net-Zero Emissions Platform, College of Engineering<br/>Net-Zero Carbon Emission Lab (NCEL) · Kwame Nkrumah University of Science and Technology<br/>GHG inventory · Scopes 1, 2 &amp; 3 · 2023–2025 baseline</div>
+  <div style="text-align:right"><b>Principal Investigator</b><br/>Dr. Yen Adams Sokama-Neuyam<br/>asokama@knust.edu.gh · +233 24 593 7358</div>
+</div></footer>
+</body>
+</html>
